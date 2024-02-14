@@ -1,0 +1,35 @@
+<p>Control (<span id="status">{{ status }}</span>)</p>
+<div>
+  <button hx-get="/play" hx-target="#status" hx-swap="innerHTML">Play</button>
+  <button hx-get="/pause" hx-target="#status" hx-swap="innerHTML">Pause</button>
+  <button hx-get="/stop" hx-target="#queue" hx-swap="innerHTML">Stop</button>
+  <button hx-get="/skip" hx-target="#queue" hx-swap="innerHTML">
+    Skip one
+  </button>
+</div>
+<p>Speed (x<span id="speed">{{ speed }}</span>)</p>
+<div>
+  {% for s in ["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"] %}
+  <button hx-get="/speed/{{ s }}" hx-target="#speed" hx-swap="innerHTML">
+    x{{ s }}
+  </button>
+  {% endfor %}
+</div>
+<p>Upload song</p>
+<div>
+  <form
+    hx-post="/upload"
+    hx-encoding="multipart/form-data"
+    hx-target="#queue"
+    hx-swap="innerHTML"
+  >
+    <input type="file" name="music" accept=".mp3" />
+    <button type="submit">Upload File</button>
+  </form>
+</div>
+<p>Queue</p>
+<div id="queue">{{ queue }}</div>
+<button hx-get="/queue" hx-target="#queue" hx-swap="innerHTML">
+  Refresh queue
+</button>
+<script src="https://unpkg.com/htmx.org"></script>
