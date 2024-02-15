@@ -18,6 +18,7 @@ struct AppState {
 struct IndexTemplate {
     queue: QueueTemplate,
     speed: f32,
+    volume: f32,
     status: String,
 }
 
@@ -25,6 +26,25 @@ struct IndexTemplate {
 #[template(path = "queue.html")]
 struct QueueTemplate {
     queue: Vec<String>,
+}
+
+#[get("/")]
+async fn index(data: web::Data<AppState>) -> impl Responder {
+    let status = if data.clone().sink.lock().unwrap().is_paused() {
+        "Paused".to_string()
+    } else {
+        "Playing".to_string()
+    };
+
+    let vol = data.clone().sink.lock().unwrap().volume() * 100.;
+    let s = data.clone().sink.lock().unwrap().speed();
+
+    IndexTemplate {
+        volume: vol,
+        speed: s,
+        queue: get_queue(data.clone()),
+        status,
+    }
 }
 
 #[get("/play")]
@@ -51,9 +71,8 @@ async fn stop(data: web::Data<AppState>) -> impl Responder {
 #[get("/skip")]
 async fn skip(data: web::Data<AppState>) -> impl Responder {
     let l = data.sink.lock().unwrap().len() - 1;
-    data.sink.lock().unwrap().skip_one();
-
     let q = data.queue.lock().unwrap();
+    data.sink.lock().unwrap().skip_one();
 
     render_queue(q[q.len() - l..].to_vec())
 }
@@ -65,25 +84,15 @@ async fn speed(data: web::Data<AppState>, speed: web::Path<f32>) -> impl Respond
     data.clone().sink.lock().unwrap().speed().to_string()
 }
 
-#[get("/queue")]
-async fn queue(data: web::Data<AppState>) -> impl Responder {
-    get_queue(data)
+#[get("/volume/{volume}")]
+async fn volume(data: web::Data<AppState>, volume: web::Path<f32>) -> impl Responder {
+    data.sink.lock().unwrap().set_volume(*volume);
+
+    (data.clone().sink.lock().unwrap().volume() * 100.)
+        .round()
+        .to_string()
 }
 
-#[get("/")]
-async fn index(data: web::Data<AppState>) -> impl Responder {
-    let status = if data.clone().sink.lock().unwrap().is_paused() {
-        "Paused".to_string()
-    } else {
-        "Playing".to_string()
-    };
-
-    IndexTemplate {
-        queue: get_queue(data.clone()),
-        speed: data.clone().sink.lock().unwrap().speed(),
-        status,
-    }
-}
 #[post("/upload")]
 async fn upload(mut payload: Multipart, data: web::Data<AppState>) -> impl Responder {
     let mut buffer = Vec::new();
@@ -113,6 +122,11 @@ async fn upload(mut payload: Multipart, data: web::Data<AppState>) -> impl Respo
     get_queue(data)
 }
 
+#[get("/queue")]
+async fn queue(data: web::Data<AppState>) -> impl Responder {
+    get_queue(data)
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
@@ -130,11 +144,12 @@ async fn main() -> std::io::Result<()> {
             .service(index)
             .service(play)
             .service(pause)
+            .service(stop)
+            .service(skip)
+            .service(volume)
             .service(speed)
             .service(upload)
             .service(queue)
-            .service(stop)
-            .service(skip)
     })
     .bind(("127.0.0.1", 8080))?
     .run()

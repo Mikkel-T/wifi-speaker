@@ -7,9 +7,17 @@
     Skip one
   </button>
 </div>
+<p>Volume (<span id="volume">{{ volume }}</span>%)</p>
+<div>
+  {% for v in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] %}
+  <button hx-get="/volume/{{ v }}" hx-target="#volume" hx-swap="innerHTML">
+    {{ v * 100.0 }}%
+  </button>
+  {% endfor %}
+</div>
 <p>Speed (x<span id="speed">{{ speed }}</span>)</p>
 <div>
-  {% for s in ["0.25", "0.5", "0.75", "1", "1.25", "1.5", "1.75", "2"] %}
+  {% for s in [0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0] %}
   <button hx-get="/speed/{{ s }}" hx-target="#speed" hx-swap="innerHTML">
     x{{ s }}
   </button>
