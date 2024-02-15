@@ -5,12 +5,12 @@ use futures::{StreamExt, TryStreamExt};
 use rodio::{Decoder, OutputStream, Sink, Source};
 use std::{
     io::{BufReader, Cursor},
-    sync::{Arc, Mutex},
+    sync::Mutex,
 };
 
 struct AppState {
     queue: Mutex<Vec<String>>,
-    sink: Arc<Mutex<Sink>>,
+    sink: Mutex<Sink>,
 }
 
 #[derive(Template)]
@@ -30,7 +30,7 @@ struct QueueTemplate {
 #[get("/play")]
 async fn play(data: web::Data<AppState>) -> impl Responder {
     data.sink.lock().unwrap().play();
-    
+
     "Playing"
 }
 
@@ -116,15 +116,12 @@ async fn upload(mut payload: Multipart, data: web::Data<AppState>) -> impl Respo
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
-
     let sink = Sink::try_new(&stream_handle).unwrap();
-
-    let snk = Arc::new(Mutex::new(sink));
     let song_queue = Vec::new();
 
     let data = web::Data::new(AppState {
         queue: Mutex::new(song_queue.clone()),
-        sink: Arc::clone(&snk),
+        sink: Mutex::new(sink),
     });
 
     HttpServer::new(move || {
