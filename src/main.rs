@@ -95,10 +95,8 @@ async fn volume(data: web::Data<AppState>, volume: web::Path<f32>) -> impl Respo
 
 #[post("/upload")]
 async fn upload(mut payload: Multipart, data: web::Data<AppState>) -> impl Responder {
-    let mut buffer = Vec::new();
-    let mut title = String::new();
-
     while let Ok(Some(mut field)) = payload.try_next().await {
+        let mut buffer = Vec::new();
         let content_disposition = field.content_disposition().clone();
         let filename = content_disposition
             .get_filename()
@@ -109,15 +107,14 @@ async fn upload(mut payload: Multipart, data: web::Data<AppState>) -> impl Respo
             buffer.extend_from_slice(&data);
         }
 
-        title = filename.to_string();
+        data.queue.lock().unwrap().push(filename.to_string());
+
+        let audio_source = Cursor::new(buffer);
+        let decoder = Decoder::new(BufReader::new(audio_source)).unwrap();
+        let source = decoder.convert_samples::<f32>();
+
+        data.sink.lock().unwrap().append(source);
     }
-
-    let audio_source = Cursor::new(buffer);
-    let decoder = Decoder::new(BufReader::new(audio_source)).unwrap();
-    let source = decoder.convert_samples::<f32>();
-
-    data.queue.lock().unwrap().push(title);
-    data.sink.lock().unwrap().append(source);
 
     get_queue(data)
 }
