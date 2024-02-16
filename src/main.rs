@@ -36,7 +36,7 @@ async fn index(data: web::Data<AppState>) -> impl Responder {
         "Playing".to_string()
     };
 
-    let vol = data.clone().sink.lock().unwrap().volume() * 100.;
+    let vol = data.clone().sink.lock().unwrap().volume() * 100.0;
     let s = data.clone().sink.lock().unwrap().speed();
 
     IndexTemplate {
@@ -88,7 +88,7 @@ async fn speed(data: web::Data<AppState>, speed: web::Path<f32>) -> impl Respond
 async fn volume(data: web::Data<AppState>, volume: web::Path<f32>) -> impl Responder {
     data.sink.lock().unwrap().set_volume(*volume);
 
-    (data.clone().sink.lock().unwrap().volume() * 100.)
+    (data.clone().sink.lock().unwrap().volume() * 100.0)
         .round()
         .to_string()
 }
