@@ -25,23 +25,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install dependencies
-        run: sudo apt-get install -y libasound2-dev gcc-arm-linux-gnueabihf
+        run: sudo apt-get install libasound2-dev
         if: matrix.os == 'ubuntu-latest'
       - name: Build
         run: cargo build --release --locked
-      - name: Compile for Raspberry Pi
-        run: |
-          rustup target add armv7-unknown-linux-gnueabihf
-          cargo build --release --target=armv7-unknown-linux-gnueabihf
-        if: matrix.os == 'ubuntu-latest'
-      - name: Upload Raspberry Pi binary to release
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/armv7-unknown-linux-gnueabihf/release/${{ matrix.artifact_name }}
-          asset_name: ${{ matrix.asset_name }}-rpi
-          tag: ${{ github.ref }}
-        if: matrix.os == 'ubuntu-latest'
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
