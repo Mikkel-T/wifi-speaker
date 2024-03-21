@@ -36,7 +36,7 @@ async fn index(data: web::Data<AppState>) -> impl Responder {
         "Playing".to_string()
     };
 
-    let vol = data.clone().sink.lock().unwrap().volume() * 100.0;
+    let vol = data.clone().sink.lock().unwrap().volume();
     let s = data.clone().sink.lock().unwrap().speed();
 
     IndexTemplate {

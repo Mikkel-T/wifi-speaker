@@ -22,7 +22,7 @@
         Skip one
       </button>
     </div>
-    <p>Volume (<span id="volume">{{ volume }}</span>%)</p>
+    <p>Volume (<span id="volume">{{ (volume * 100.0).round() }}</span>%)</p>
     <div>
       {% for v in [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0] %}
       <button hx-get="/volume/{{ v }}" hx-target="#volume" hx-swap="innerHTML">
